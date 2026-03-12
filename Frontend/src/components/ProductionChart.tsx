@@ -1,5 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { HourlyData } from "@/lib/mock-data";
+import { HourlyData } from "@/lib/types.ts";
 
 interface ProductionChartProps {
   data: HourlyData[];

@@ -7,7 +7,31 @@ import ProductionChart from "@/components/ProductionChart";
 import WeatherSummary from "@/components/WeatherSummary";
 import SolarWindow from "@/components/SolarWindow";
 import InsightPanel from "@/components/InsightPanel";
-import { generateForecast, generateInsights, DailyForecast } from "@/lib/mock-data";
+import { fetchSolarForecast, BackendForecastRow } from "@/lib/forecast-api";
+// import { generateForecast, generateInsights, DailyForecast } from "@/lib/mock-data";
+
+type HourlyData = {
+  hour: number;
+  production: number;
+};
+
+type DailyForecast = {
+  date: string;
+  hourlyData: HourlyData[];
+  totalProduction: number;
+  peakHour: number;
+  peakProduction: number;
+  solarPotentialScore: number;
+  optimalWindowStart: number;
+  optimalWindowEnd: number;
+  optimalWindowProduction: number;
+};
+
+function parseHour(dateHour: string) {
+  const hourStr = dateHour.split(" ")[1].split(":")[0];
+  return Number(hourStr);
+}
+
 
 const ForecastPage = () => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -15,18 +39,63 @@ const ForecastPage = () => {
   const [result, setResult] = useState<DailyForecast | null>(null);
 
   const handlePredict = async () => {
-    if (!selectedDate) return;
-    setLoading(true);
-    setResult(null);
+  if (!selectedDate) return;
+  setLoading(true);
+  setResult(null);
 
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 2000));
-    const forecast = generateForecast(selectedDate);
+  try {
+    const rows = await fetchSolarForecast();
+    const rowsForDate = rows.filter(r => r["Date-Hour"].startsWith(selectedDate));
+
+    if (rowsForDate.length === 0) {
+      setResult(null);
+      return;
+    }
+
+    const hourlyData = rowsForDate.map(r => ({
+      hour: parseHour(r["Date-Hour"]),
+      production: r["PredictedSolarPower"],
+    }));
+
+    const totalProduction = hourlyData.reduce((s, d) => s + d.production, 0);
+
+    const peakEntry = hourlyData.reduce(
+      (max, d) => (d.production > max.production ? d : max),
+      hourlyData[0]
+    );
+
+    const sorted = [...hourlyData].sort((a, b) => b.production - a.production);
+    const topHours = sorted.slice(0, 4).map(d => d.hour).sort((a, b) => a - b);
+    const optimalStart = topHours[0];
+    const optimalEnd = topHours[topHours.length - 1];
+    const optimalProduction = hourlyData
+      .filter(d => d.hour >= optimalStart && d.hour <= optimalEnd)
+      .reduce((sum, d) => sum + d.production, 0);
+
+    const solarPotentialScore = Math.round(
+      Math.min(100, (totalProduction / 80) * 100)
+    );
+
+    const forecast: DailyForecast = {
+      date: selectedDate,
+      hourlyData,
+      totalProduction,
+      peakHour: peakEntry.hour,
+      peakProduction: peakEntry.production,
+      solarPotentialScore,
+      optimalWindowStart: optimalStart,
+      optimalWindowEnd: optimalEnd,
+      optimalWindowProduction: optimalProduction,
+    };
+
     setResult(forecast);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
-  const insights = result ? generateInsights(result) : [];
+
+  //const insights = result ? generateInsights(result) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,10 +189,12 @@ const ForecastPage = () => {
               </div>
 
               {/* Weather + Insights */}
-              <div className="grid lg:grid-cols-2 gap-6 mb-8">
+              {/* <div className="grid lg:grid-cols-2 gap-6 mb-8">
                 <WeatherSummary data={result.hourlyData} />
                 <InsightPanel insights={insights} />
-              </div>
+              </div> */}
+              {/* Weather + Insights removed until backend provides weather data */}
+
             </motion.div>
           )}
         </AnimatePresence>

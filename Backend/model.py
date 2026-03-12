@@ -6,7 +6,8 @@ import joblib
 print("🚀 Training Solar Power Model...")
 
 # Load dataset
-data = pd.read_csv(r"c:\Users\athar\Downloads\Solar Power Plant Data.csv")
+data = pd.read_csv("/Users/apple/Desktop/ABG-data/Solar Power Plant Data.csv")
+
 
 # Convert datetime
 data['Date-Hour(NMT)'] = pd.to_datetime(
