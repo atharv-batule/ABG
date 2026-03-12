@@ -65,3 +65,4 @@ htmlcov/
 
 *.tmp
 *.swp
+*.sqlite

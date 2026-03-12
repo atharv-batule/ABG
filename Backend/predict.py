@@ -12,17 +12,14 @@ def predict_today(lat, lon):
 
     # Feature columns used by the model
     features = weather_df[
-        [
-            "WindSpeed",
-            "Sunshine",
-            "AirPressure",
-            "Radiation",
-            "AirTemperature",
-            "RelativeAirHumidity",
-            "hour",
-            "month",
-        ]
-    ]
+[
+"Radiation",
+"Sunshine",
+"AirTemperature",
+"WindSpeed",
+"hour"
+]
+]
 
     # Predict solar output
     predictions = model.predict(features)

@@ -1,53 +1,65 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
 
 print("🚀 Training Solar Power Model...")
 
-# Load dataset
-data = pd.read_csv("/Users/apple/Desktop/ABG-data/Solar Power Plant Data.csv")
+data = pd.read_csv("./Solar Power Plant Data.csv")
 
-
-# Convert datetime
 data['Date-Hour(NMT)'] = pd.to_datetime(
     data['Date-Hour(NMT)'],
     format='%d.%m.%Y-%H:%M'
 )
 
-# Feature engineering
 data['hour'] = data['Date-Hour(NMT)'].dt.hour
-data['month'] = data['Date-Hour(NMT)'].dt.month
 
-# Remove datetime
-data = data.drop(columns=['Date-Hour(NMT)'])
-
-# Handle missing values
 data = data.ffill()
 
-# Features
-X = data[['WindSpeed',
-          'Sunshine',
-          'AirPressure',
-          'Radiation',
-          'AirTemperature',
-          'RelativeAirHumidity',
-          'hour',
-          'month']]
+# Selected features based on correlation
+X = data[
+[
+"Radiation",
+"Sunshine",
+"AirTemperature",
+"WindSpeed",
+"hour"
+]
+]
 
-# Target
-y = data['SystemProduction']
+# target (kW → MW)
+y = data["SystemProduction"] / 1000
 
-# Train split
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+split = int(len(X)*0.8)
+
+X_train = X[:split]
+X_test = X[split:]
+
+y_train = y[:split]
+y_test = y[split:]
+
+model = RandomForestRegressor(
+    n_estimators=300,
+    max_depth=15,
+    random_state=42,
+    n_jobs=-1
 )
 
-# Train model
-model = RandomForestRegressor(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Save model
+y_pred = model.predict(X_test)
+
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+r2 = r2_score(y_test, y_pred)
+
+print("\nModel Evaluation")
+print("----------------")
+print("MAE:", round(mae,3))
+print("RMSE:", round(rmse,3))
+print("R2:", round(r2,3))
+
 joblib.dump(model, "solar_model.pkl")
 
-print("✅ Model trained and saved as solar_model.pkl")
+print("\n✅ Model saved")
