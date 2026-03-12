@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 220 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 12%;
+
+    --primary: 45 100% 51%;
+    --primary-foreground: 220 30% 12%;
+
+    --secondary: 215 80% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 15% 93%;
+    --muted-foreground: 215 15% 50%;
+
+    --accent: 45 90% 95%;
+    --accent-foreground: 45 100% 30%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 45 100% 51%;
+
+    --radius: 0.75rem;
+
+    --solar-yellow: 45 100% 51%;
+    --solar-amber: 38 92% 50%;
+    --solar-orange: 25 95% 53%;
+    --deep-blue: 215 80% 28%;
+    --navy: 220 50% 14%;
+    --sky-blue: 200 80% 55%;
+    --energy-green: 150 60% 45%;
+    --energy-green-foreground: 0 0% 100%;
+    --chart-glow: 45 100% 70%;
+
+    --sidebar-background: 220 50% 14%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 45 100% 51%;
+    --sidebar-primary-foreground: 220 30% 12%;
+    --sidebar-accent: 220 40% 20%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 220 40% 22%;
+    --sidebar-ring: 45 100% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg;
+  }
+
+  .solar-gradient {
+    background: linear-gradient(135deg, hsl(var(--solar-yellow)), hsl(var(--solar-orange)));
+  }
+
+  .navy-gradient {
+    background: linear-gradient(135deg, hsl(var(--navy)), hsl(var(--deep-blue)));
+  }
+
+  .glow-solar {
+    box-shadow: 0 0 30px hsl(var(--solar-yellow) / 0.3), 0 0 60px hsl(var(--solar-yellow) / 0.1);
+  }
+
+  .text-gradient-solar {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--solar-yellow)), hsl(var(--solar-orange)));
+  }
+}
