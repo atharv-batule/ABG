@@ -9,10 +9,60 @@ app = Flask(__name__)
 @app.route("/solar-forecast", methods=["GET"])
 def solar_forecast():
 
-    df = predict_today(15.2833, 73.9833)
-    result = df.to_dict(orient="records")
+    lat = 15.2833
+    lon = 73.9833
 
-    return jsonify(result)
+    # Get solar predictions
+    df = predict_today(lat, lon)
+
+    # Fix datetime format
+    df["Date-Hour"] = pd.to_datetime(
+        df["Date-Hour"].astype(str).str.replace(" IST", "", regex=False)
+    )
+
+    # Forecast data (UNCHANGED)
+    forecast = df.to_dict(orient="records")
+
+    # -------- Generate simple insights --------
+    peak_row = df.loc[df["PredictedSolarPower"].idxmax()]
+    peak_time = peak_row["Date-Hour"].strftime("%H:%M")
+    peak_value = round(float(peak_row["PredictedSolarPower"]), 2)
+
+    avg_power = round(float(df["PredictedSolarPower"].mean()), 2)
+
+    insights = [
+        {
+            "title": "Peak Solar Production",
+            "description": "Solar output will reach its highest level during the day.",
+            "detail": f"Peak production of about {peak_value} units is expected around {peak_time}.",
+            "icon": "sun"
+        },
+        {
+            "title": "Morning Generation Ramp",
+            "description": "Solar production begins after sunrise.",
+            "detail": "Energy generation starts increasing after 07:00 as solar radiation increases.",
+            "icon": "sunrise"
+        },
+        {
+            "title": "Evening Decline",
+            "description": "Solar output drops after sunset.",
+            "detail": "Production gradually decreases after 17:00 and reaches zero by evening.",
+            "icon": "sunset"
+        },
+        {
+            "title": "Average Daily Production",
+            "description": "Average solar generation level for the forecast period.",
+            "detail": f"The average predicted production is about {avg_power} units.",
+            "icon": "chart"
+        }
+    ]
+
+    response = {
+        "forecast": forecast,
+        "insights": insights
+    }
+
+    return jsonify(response)
 
 
 @app.route("/analytics", methods=["GET"])
@@ -26,7 +76,6 @@ def analytics():
 
     df = pd.merge(weather_df, pred_df, on="Date-Hour")
 
-    # Fix IST timezone
     df["Date-Hour"] = pd.to_datetime(
         df["Date-Hour"].astype(str).str.replace(" IST", "", regex=False)
     )
@@ -34,17 +83,14 @@ def analytics():
     df["date"] = df["Date-Hour"].dt.strftime("%Y-%m-%d")
     df["hour"] = df["Date-Hour"].dt.hour
 
-    # -------- Radiation vs Production --------
     radiation_vs_production = df[["Radiation","PredictedSolarPower"]] \
         .astype(float) \
         .to_dict(orient="records")
 
-    # -------- Temperature vs Production --------
     temperature_vs_production = df[["AirTemperature","PredictedSolarPower"]] \
         .astype(float) \
         .to_dict(orient="records")
 
-    # -------- Daily Solar Production Trend --------
     daily_trend = (
         df.groupby("date")["PredictedSolarPower"]
         .sum()
@@ -53,7 +99,6 @@ def analytics():
         .to_dict(orient="records")
     )
 
-    # -------- Heatmap Data --------
     heatmap_df = (
         df.groupby(["date","hour"])["PredictedSolarPower"]
         .mean()
@@ -62,7 +107,6 @@ def analytics():
 
     heatmap = heatmap_df.to_dict(orient="records")
 
-    # -------- Statistics --------
     correlation = float(df["Radiation"].corr(df["PredictedSolarPower"]))
     avg_radiation = float(df["Radiation"].mean())
     avg_production = float(df["PredictedSolarPower"].mean())
